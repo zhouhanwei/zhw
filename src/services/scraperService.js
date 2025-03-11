@@ -81,20 +81,23 @@ exports.scrape = async (maxPages = 1) => {
 
 exports.getDetail = async (link, channelId, articleId) => {
   try {
-    console.log('link', link);
-    const { data } = await axios.get(link);
-    const $ = cheerio.load(data);
-    const title = $('.content_wrapper').find('#title').text().trim();
-    const info = $('.content_wrapper').find('.pull-left').find('span:lt(3)').text().trim();
-    const content = $('.content_wrapper').find('#ch_p').find('p').text().trim();
     // 检查数据库中是否有当前列表的详情页
     const existingDetail = await ArticleDetail.findOne({ where: { articleId, channelId } });
     if (!existingDetail) {
+      const { data } = await axios.get(link);
+      const $ = cheerio.load(data);
+      const title = $('.content_wrapper').find('#title').text().trim();
+      const info = $('.content_wrapper').find('.pull-left').find('span:lt(3)').text().trim();
+      const content = $('.content_wrapper').find('#ch_p').find('p').text().trim();
       // 存储数据到数据库
+      console.log('开始存数据哭')
       await ArticleDetail.create({ title, info, content, articleId, channelId });
+      // 返回文章详情
+      return {title, info, content, articleId, channelId};
+    } else {
+      // 返回数据库中的数据
+      return {...existingDetail.dataValues}
     }
-    // 返回文章详情
-    return {title, info, content, articleId, channelId};
   } catch (error) {
     throw new Error('获取详情页面数据时出错');
   }
