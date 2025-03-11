@@ -1,6 +1,7 @@
 const axios = require('axios');
 const cheerio = require('cheerio');
 const Article = require('../models/Article');
+const ArticleDetail = require('../models/ArticleDetail');
 const cron = require('node-cron');
 const { emitUpdate } = require('../socket');
 
@@ -46,7 +47,7 @@ const cyclicallyObtainInformation = async (maxPages = 1, isSocket = false, chann
         const channelId = new URL(link, baseUrl).searchParams.get('channelId');
 
         // 检查是否已存在
-        const existingArticle = await Article.findOne({ where: { articleId } });
+        const existingArticle = await Article.findOne({ where: { articleId, channelId } });
         if (!existingArticle) {
           // 存储到数据库
           const newArticle = await Article.create({ title, date, articleId, channelId, areaName });
@@ -56,21 +57,6 @@ const cyclicallyObtainInformation = async (maxPages = 1, isSocket = false, chann
         }
       });
     });
-  }
-};
-
-
-// 获取详情页数据
-const getDetailPageData = async (link) => {
-  try {
-    const { data } = await axios.get(link);
-    const $ = cheerio.load(data);
-    const title = $('.content_wrapper').find('#title').text().trim();
-    const info = $('.content_wrapper').find('.pull-left').find('span:lt(3)').text().trim();
-    const content = $('.content_wrapper').find('#ch_p').find('p').text().trim();
-    return { title, info, content };
-  } catch (error) {
-    throw new Error('获取详情页面数据时出错');
   }
 };
 
@@ -84,6 +70,7 @@ cron.schedule('*/30 * * * *', async () => {
   }
 });
 
+//
 exports.scrape = async (maxPages = 1) => {
   try {
     await cyclicallyObtainAreaInformation(maxPages);
@@ -92,10 +79,22 @@ exports.scrape = async (maxPages = 1) => {
   }
 };
 
-exports.getDetail = async (link) => {
+exports.getDetail = async (link, channelId, articleId) => {
   try {
-    const content = await getDetailPageData(link);
-    return content;
+    console.log('link', link);
+    const { data } = await axios.get(link);
+    const $ = cheerio.load(data);
+    const title = $('.content_wrapper').find('#title').text().trim();
+    const info = $('.content_wrapper').find('.pull-left').find('span:lt(3)').text().trim();
+    const content = $('.content_wrapper').find('#ch_p').find('p').text().trim();
+    // 检查数据库中是否有当前列表的详情页
+    const existingDetail = await ArticleDetail.findOne({ where: { articleId, channelId } });
+    if (!existingDetail) {
+      // 存储数据到数据库
+      await ArticleDetail.create({ title, info, content, articleId, channelId });
+    }
+    // 返回文章详情
+    return {title, info, content, articleId, channelId};
   } catch (error) {
     throw new Error('获取详情页面数据时出错');
   }
