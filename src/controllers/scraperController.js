@@ -1,5 +1,5 @@
 const scraperService = require('../services/scraperService');
-const { createResponse } = require('../helpers/responseHelper');
+const { createResponse, createListResponse } = require('../helpers/responseHelper');
 
 /**
  * 从服务中抓取数据并返回响应
@@ -41,8 +41,9 @@ exports.getDetailData = async (req, res) => {
  */
 exports.getAllArticles = async (req, res) => {
   try {
-    const articles = await scraperService.getAllArticles();
-    res.status(200).json(createResponse('success', 'Articles fetched successfully', articles));
+    const { pageIndex = 1, pageSize = 10, channelId } = req.query;
+    const articles = await scraperService.getAllArticles(Number(pageIndex), Number(pageSize), channelId);
+    res.status(200).json(createListResponse('success', 'Articles fetched successfully', articles));
   } catch (error) {
     res.status(500).json(createResponse('error', error.message));
   }

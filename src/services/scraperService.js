@@ -49,10 +49,15 @@ const cyclicallyObtainInformation = async (maxPages = 1, isSocket = false, chann
         // 检查是否已存在
         const existingArticle = await Article.findOne({ where: { articleId, channelId } });
         if (!existingArticle) {
-          // 存储到数据库
-          const newArticle = await Article.create({ title, date, articleId, channelId, areaName });
-          if (isSocket) {
-            emitUpdate(newArticle); // 推送更新的数据
+          // 检查日期是否是今年以前的
+          const currentYear = new Date().getFullYear();
+          const articleYear = new Date(date).getFullYear();
+          if (articleYear >= currentYear) {
+            // 存储到数据库
+            const newArticle = await Article.create({ title, date, articleId, channelId, areaName });
+            if (isSocket) {
+              emitUpdate(newArticle); // 推送更新的数据
+            }
           }
         }
       });
@@ -87,10 +92,10 @@ exports.getDetail = async (link, channelId, articleId) => {
       const { data } = await axios.get(link);
       const $ = cheerio.load(data);
       const title = $('.content_wrapper').find('#title').text().trim();
-      const info = $('.content_wrapper').find('.pull-left').find('span:lt(3)').text().trim();
+      const info = JSON.stringify($('.content_wrapper').find('.pull-left').find('span').map((i, el) => $(el).text().trim()).get().slice(0, 3));
       const content = $('.content_wrapper').find('#ch_p').find('p').text().trim();
       // 存储数据到数据库
-      console.log('开始存数据哭')
+      console.log('开始存数据')
       await ArticleDetail.create({ title, info, content, articleId, channelId });
       // 返回文章详情
       return {title, info, content, articleId, channelId};
@@ -103,10 +108,22 @@ exports.getDetail = async (link, channelId, articleId) => {
   }
 };
 
-exports.getAllArticles = async () => {
+exports.getAllArticles = async (pageIndex = 1, pageSize = 10, channelId) => {
   try {
-    const articles = await Article.findAll();
-    return articles;
+    const offset = (pageIndex - 1) * pageSize;
+    const where = channelId ? { channelId } : {};
+    const articles = await Article.findAndCountAll({
+      where,
+      limit: pageSize,
+      offset: offset,
+      order: [['date', 'DESC']],
+    });
+    return {
+      count: articles.count,
+      pageIndex,
+      pageSize,
+      rows: articles.rows,
+    };
   } catch (error) {
     throw new Error('获取数据库中的数据时出错');
   }

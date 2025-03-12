@@ -41,7 +41,7 @@ const Article = sequelize.define('Article', {
     defaultValue: DataTypes.NOW,
   },
 }, {
-  tableName: 'articles',
+  tableName: 'maritime_articles',
   timestamps: false,
 });
 

@@ -1,7 +1,7 @@
 {
-  "name": "my-web-scraper",
+  "name": "maritime-affairs-scraper",
   "version": "1.0.0",
-  "description": "A web scraper for fetching data from msa.gov.cn",
+  "description": "海事局数据抓取",
   "main": "src/app.js",
   "scripts": {
     "start": "node src/app.js",
@@ -13,7 +13,7 @@
     "cheerio": "^1.0.0-rc.10",
     "cors": "^2.8.5",
     "express": "^4.17.1",
-    "my-web-scraper": "file:",
+    "maritime-affairs-scraper": "file:",
     "mysql2": "^3.13.0",
     "node-cron": "^3.0.3",
     "sequelize": "^6.37.6",

@@ -20,7 +20,7 @@ const ArticleDetail = sequelize.define('ArticleDetail', {
     allowNull: false,
   },
   info: {
-    type: DataTypes.TEXT,
+    type: DataTypes.STRING,
     allowNull: false,
   },
   content: {
@@ -41,7 +41,7 @@ const ArticleDetail = sequelize.define('ArticleDetail', {
     allowNull: false,
   }
 }, {
-  tableName: 'article_details',
+  tableName: 'maritime_article_details',
   timestamps: false,
 });
 
